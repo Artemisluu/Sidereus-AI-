@@ -13,6 +13,7 @@
     "biome:format": "biome format --write ."
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.4"
+    "@biomejs/biome": "^1.9.4",
+    "pdfkit": "^0.17.2"
   }
 }

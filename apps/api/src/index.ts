@@ -75,6 +75,26 @@ function cleanResumeText(raw: string): string {
     .trim()
 }
 
+async function parsePdfText(buffer: Buffer): Promise<string> {
+  const attempts: Array<{ label: string; options?: { version?: string } }> = [
+    { label: "default" },
+    { label: "legacy-v1.10.100", options: { version: "v1.10.100" } },
+  ]
+
+  let lastError: unknown
+
+  for (const attempt of attempts) {
+    try {
+      const parsed = await pdf(buffer, attempt.options as any)
+      return parsed.text ?? ""
+    } catch (error) {
+      lastError = error
+    }
+  }
+
+  throw lastError
+}
+
 async function initDb() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS candidates (
@@ -244,8 +264,7 @@ app.post("/api/candidates/upload", upload.array("resumes", 10), async (req, res,
 
     for (const file of files) {
       const buffer = fs.readFileSync(file.path)
-      const parsed = await pdf(buffer)
-      const rawText = parsed.text ?? ""
+      const rawText = await parsePdfText(buffer)
       const cleanedText = cleanResumeText(rawText)
       const id = randomUUID()
       const fileUrl = `/uploads/${path.basename(file.path)}`
