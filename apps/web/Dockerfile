@@ -16,7 +16,7 @@ RUN pnpm install --no-frozen-lockfile
 COPY apps/web ./apps/web
 COPY packages/shared ./packages/shared
 
-RUN pnpm --filter @sidereus/web build
+RUN pnpm --filter @sidereus/shared build && pnpm --filter @sidereus/web build
 
 FROM nginx:1.27-alpine AS runtime
 
