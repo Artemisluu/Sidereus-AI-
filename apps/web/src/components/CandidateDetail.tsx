@@ -111,7 +111,7 @@ export function CandidateDetail({ candidate, selectedJobId }: Props) {
     const source = streamExtractCandidate(
       candidate.id,
       (chunk) => {
-        setStructured((prev) => ({ ...prev, [chunk.key]: chunk.value }))
+        setStructured((prev: ResumeStructured) => ({ ...prev, [chunk.key]: chunk.value }))
       },
       (progress) => {
         setStreamStep(`处理中：${progress.step}`)

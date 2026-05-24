@@ -96,7 +96,7 @@ export default function App() {
             onSelect={setSelectedCandidateId}
             compareIds={compareIds}
             onToggleCompare={(candidateId) => {
-              setCompareIds((prev) => {
+              setCompareIds((prev: string[]) => {
                 if (prev.includes(candidateId)) {
                   return prev.filter((id) => id !== candidateId)
                 }

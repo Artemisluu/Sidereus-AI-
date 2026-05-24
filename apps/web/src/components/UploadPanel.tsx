@@ -58,7 +58,7 @@ export function UploadPanel({ onUploaded }: Props) {
         thumbnail: await buildPdfThumbnail(file),
       }))
     )
-    setFiles((prev) => [...prev, ...previews].slice(0, 10))
+    setFiles((prev: PreviewFile[]) => [...prev, ...previews].slice(0, 10))
   }
 
   return (
