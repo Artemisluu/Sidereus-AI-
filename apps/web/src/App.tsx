@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { fetchCandidate, fetchCandidates } from "./api"
 import { CandidateDetail } from "./components/CandidateDetail"
 import { CandidateList } from "./components/CandidateList"
@@ -12,6 +12,9 @@ export default function App() {
   const [selectedCandidateId, setSelectedCandidateId] = useState("")
   const [selectedJobId, setSelectedJobId] = useState("")
   const [compareIds, setCompareIds] = useState<string[]>([])
+  const [uploadOpen, setUploadOpen] = useState(true)
+  const [jdOpen, setJdOpen] = useState(false)
+  const candidatePanelRef = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
     const root = document.documentElement
@@ -55,6 +58,26 @@ export default function App() {
     [candidatesQuery.data, compareIds]
   )
 
+  function handleUploadCompleted() {
+    setGlobalError("")
+    setUploadOpen(false)
+
+    window.setTimeout(() => {
+      const element = candidatePanelRef.current
+      if (!element) {
+        return
+      }
+
+      const rect = element.getBoundingClientRect()
+      const targetTop = window.scrollY + rect.top - window.innerHeight * 0.18
+
+      window.scrollTo({
+        top: Math.max(targetTop, 0),
+        behavior: "smooth",
+      })
+    }, 120)
+  }
+
   return (
     <main className="mx-auto min-h-screen w-full max-w-[1480px] space-y-4 px-5 py-5">
       <header className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
@@ -79,37 +102,72 @@ export default function App() {
         </div>
       )}
 
-      <section className="grid grid-cols-1 gap-3 xl:grid-cols-2">
-        <UploadPanel onUploaded={() => setGlobalError("")} />
-        <JdPanel onSelectJob={setSelectedJobId} selectedJobId={selectedJobId} />
+      <section className="space-y-3">
+        <article className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+          <button
+            type="button"
+            className="flex w-full items-center justify-between text-left"
+            onClick={() => setUploadOpen((prev: boolean) => !prev)}
+          >
+            <h2 className="text-lg font-semibold">简历上传与解析</h2>
+            <span className="text-sm text-slate-500 dark:text-slate-400">{uploadOpen ? "收起" : "展开"}</span>
+          </button>
+          {uploadOpen && (
+            <div className="mt-3">
+              <UploadPanel onUploaded={handleUploadCompleted} />
+            </div>
+          )}
+        </article>
+
+        <article className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+          <button
+            type="button"
+            className="flex w-full items-center justify-between text-left"
+            onClick={() => setJdOpen((prev: boolean) => !prev)}
+          >
+            <h2 className="text-lg font-semibold">岗位需求配置</h2>
+            <span className="text-sm text-slate-500 dark:text-slate-400">{jdOpen ? "收起" : "展开"}</span>
+          </button>
+          {jdOpen && (
+            <div className="mt-3">
+              <JdPanel onSelectJob={setSelectedJobId} selectedJobId={selectedJobId} />
+            </div>
+          )}
+        </article>
       </section>
 
-      {candidatesQuery.isLoading ? (
-        <section className="animate-pulse rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-          候选人加载中...
-        </section>
-      ) : (
-        <section className="grid grid-cols-1 gap-3 xl:grid-cols-2">
-          <CandidateList
-            candidates={candidatesQuery.data ?? []}
-            selectedId={selectedCandidateId}
-            onSelect={setSelectedCandidateId}
-            compareIds={compareIds}
-            onToggleCompare={(candidateId) => {
-              setCompareIds((prev: string[]) => {
-                if (prev.includes(candidateId)) {
-                  return prev.filter((id) => id !== candidateId)
-                }
-                if (prev.length >= 3) {
-                  return prev
-                }
-                return [...prev, candidateId]
-              })
-            }}
-          />
-          <CandidateDetail candidate={candidateQuery.data ?? null} selectedJobId={selectedJobId} />
-        </section>
-      )}
+      <section
+        ref={candidatePanelRef}
+        className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900"
+      >
+        <h2 className="mb-3 text-lg font-semibold">候选人管理面板</h2>
+        {candidatesQuery.isLoading ? (
+          <section className="animate-pulse rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+            候选人加载中...
+          </section>
+        ) : (
+          <section className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+            <CandidateList
+              candidates={candidatesQuery.data ?? []}
+              selectedId={selectedCandidateId}
+              onSelect={setSelectedCandidateId}
+              compareIds={compareIds}
+              onToggleCompare={(candidateId) => {
+                setCompareIds((prev: string[]) => {
+                  if (prev.includes(candidateId)) {
+                    return prev.filter((id) => id !== candidateId)
+                  }
+                  if (prev.length >= 3) {
+                    return prev
+                  }
+                  return [...prev, candidateId]
+                })
+              }}
+            />
+            <CandidateDetail candidate={candidateQuery.data ?? null} selectedJobId={selectedJobId} />
+          </section>
+        )}
+      </section>
 
       <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
         <h2 className="mb-3 text-lg font-semibold">候选人对比（2-3 人）</h2>

@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import * as pdfjs from "pdfjs-dist"
 import { useState } from "react"
+import toast from "react-hot-toast"
 import { uploadResumes } from "../api"
 
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`
@@ -36,10 +37,14 @@ export function UploadPanel({ onUploaded }: Props) {
   const queryClient = useQueryClient()
   const [files, setFiles] = useState<PreviewFile[]>([])
   const [dragging, setDragging] = useState(false)
+  const [uploadedCount, setUploadedCount] = useState(0)
 
   const uploadMutation = useMutation({
     mutationFn: async () => uploadResumes(files.map((item) => item.file)),
-    onSuccess: () => {
+    onSuccess: (data) => {
+      const nextCount = uploadedCount + data.length
+      setUploadedCount(nextCount)
+      toast.success(`上传成功，当前已经上传${nextCount}份，请至候选人管理面板查看详情`)
       setFiles([])
       queryClient.invalidateQueries({ queryKey: ["candidates"] })
       onUploaded()
@@ -105,7 +110,7 @@ export function UploadPanel({ onUploaded }: Props) {
           className="rounded-lg border border-slate-300 px-3 py-2 text-sm enabled:hover:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600"
           onClick={() => uploadMutation.mutate()}
         >
-          {uploadMutation.isPending ? "上传中..." : `批量上传 (${files.length})`}
+          {uploadMutation.isPending ? "上传中..." : `确认上传 (${files.length})`}
         </button>
         {files.length < 5 && <small className="text-xs text-amber-500">至少选择 5 份简历后可上传</small>}
       </div>
