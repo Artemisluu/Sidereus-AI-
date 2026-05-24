@@ -44,7 +44,8 @@ const upload = multer({
     destination: (_req, _file, cb) => cb(null, uploadsDir),
     filename: (_req, file, cb) => {
       const id = randomUUID()
-      cb(null, `${id}-${file.originalname.replace(/\s+/g, "_")}`)
+      const normalizedName = normalizeUploadedFilename(file.originalname)
+      cb(null, `${id}-${normalizedName.replace(/\s+/g, "_")}`)
     },
   }),
   fileFilter: (_req, file, cb) => {
@@ -65,6 +66,20 @@ const jdSchema = z.object({
 const statusSchema = z.object({
   status: z.enum(["pending", "screened", "interview", "hired", "rejected"]),
 })
+
+function normalizeUploadedFilename(originalname: string): string {
+  const decoded = Buffer.from(originalname, "latin1").toString("utf8")
+  const decodedHasReplacement = decoded.includes("�")
+  const decodedHasCjk = /[\u3400-\u9fff]/.test(decoded)
+  const originalHasCjk = /[\u3400-\u9fff]/.test(originalname)
+  const looksMojibake = /[ÃÂÐÑØÅÄÖÆÇÈÉÊËÌÍÎÏÒÓÔÕÙÚÛÜÝÞßà-ÿ]/.test(originalname)
+
+  if (!decodedHasReplacement && decodedHasCjk && (!originalHasCjk || looksMojibake)) {
+    return decoded
+  }
+
+  return originalname
+}
 
 function cleanResumeText(raw: string): string {
   return raw
@@ -268,6 +283,7 @@ app.post("/api/candidates/upload", upload.array("resumes", 10), async (req, res,
       const cleanedText = cleanResumeText(rawText)
       const id = randomUUID()
       const fileUrl = `/uploads/${path.basename(file.path)}`
+      const normalizedName = normalizeUploadedFilename(file.originalname)
 
       const result = await pool.query(
         `
@@ -275,7 +291,7 @@ app.post("/api/candidates/upload", upload.array("resumes", 10), async (req, res,
           VALUES ($1, $2, $3, $4, $5, NULL, 'pending')
           RETURNING *
         `,
-        [id, file.originalname, fileUrl, rawText, cleanedText]
+        [id, normalizedName, fileUrl, rawText, cleanedText]
       )
 
       inserted.push(rowToCandidate(result.rows[0]))
