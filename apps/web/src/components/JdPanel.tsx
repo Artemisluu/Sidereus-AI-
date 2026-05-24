@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
+import toast from "react-hot-toast"
 import { createJob, fetchJobs } from "../api"
 
 interface Props {
@@ -27,6 +28,7 @@ export function JdPanel({ onSelectJob }: Props) {
       setBonusSkills("")
       queryClient.invalidateQueries({ queryKey: ["jobs"] })
       onSelectJob(job.id)
+      toast.success("保存成功")
     },
   })
 

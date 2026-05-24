@@ -1,6 +1,7 @@
 import type { Candidate, CandidateScore, CandidateStatus, ResumeStructured } from '@sidereus/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import {
   fetchJobs,
   fetchCandidateScores,
@@ -296,6 +297,7 @@ export function CandidateDetail({ candidate, selectedJobId, onSelectJob }: Props
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['candidate', variables.id] });
       queryClient.invalidateQueries({ queryKey: ['candidates'] });
+      toast.success('保存成功');
     },
   });
 
