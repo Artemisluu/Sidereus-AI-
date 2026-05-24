@@ -11,7 +11,7 @@ services:
         condition: service_started
     ports:
       - "80:80"
-    restart: unless-stoppedz
+    restart: unless-stopped
 
   api:
     build:
