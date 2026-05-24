@@ -15,6 +15,13 @@ import multer from "multer"
 import pdf from "pdf-parse"
 import { Pool } from "pg"
 import { z } from "zod"
+import {
+  cleanResumeText,
+  normalizeChunk,
+  normalizeUploadedFilename,
+  rowToCandidate,
+  safeJsonParse,
+} from "./utils"
 
 const app = express()
 const port = Number(process.env.PORT ?? 4000)
@@ -66,29 +73,6 @@ const jdSchema = z.object({
 const statusSchema = z.object({
   status: z.enum(["pending", "screened", "interview", "hired", "rejected"]),
 })
-
-function normalizeUploadedFilename(originalname: string): string {
-  const decoded = Buffer.from(originalname, "latin1").toString("utf8")
-  const decodedHasReplacement = decoded.includes("�")
-  const decodedHasCjk = /[\u3400-\u9fff]/.test(decoded)
-  const originalHasCjk = /[\u3400-\u9fff]/.test(originalname)
-  const looksMojibake = /[ÃÂÐÑØÅÄÖÆÇÈÉÊËÌÍÎÏÒÓÔÕÙÚÛÜÝÞßà-ÿ]/.test(originalname)
-
-  if (!decodedHasReplacement && decodedHasCjk && (!originalHasCjk || looksMojibake)) {
-    return decoded
-  }
-
-  return originalname
-}
-
-function cleanResumeText(raw: string): string {
-  return raw
-    .replace(/\r/g, "\n")
-    .replace(/\n{3,}/g, "\n\n")
-    .replace(/[ \t]{2,}/g, " ")
-    .replace(/[•●▪]/g, "-")
-    .trim()
-}
 
 async function parsePdfText(buffer: Buffer): Promise<string> {
   const attempts: Array<{ label: string; options?: { version?: string } }> = [
@@ -152,20 +136,6 @@ async function initDb() {
   `)
 }
 
-function rowToCandidate(row: any): Candidate {
-  return {
-    id: row.id,
-    filename: row.filename,
-    fileUrl: row.file_url,
-    rawText: row.raw_text,
-    cleanedText: row.cleaned_text,
-    structuredData: row.structured_data,
-    status: row.status,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  }
-}
-
 async function callDeepSeek(prompt: string): Promise<string> {
   if (!deepseekApiKey) {
     throw new Error("DEEPSEEK_API_KEY is required for AI extraction")
@@ -203,30 +173,6 @@ async function callDeepSeek(prompt: string): Promise<string> {
   }
 
   return payload.choices?.[0]?.message?.content ?? "{}"
-}
-
-function safeJsonParse<T>(text: string, fallback: T): T {
-  try {
-    const normalized = text
-      .replace(/^```json\s*/i, "")
-      .replace(/^```/i, "")
-      .replace(/```$/i, "")
-      .trim()
-    return JSON.parse(normalized) as T
-  } catch {
-    return fallback
-  }
-}
-
-function normalizeChunk<T>(parsed: unknown, key: string, fallback: T): T {
-  if (typeof parsed === "object" && parsed !== null && Object.prototype.hasOwnProperty.call(parsed, key)) {
-    const nested = (parsed as Record<string, unknown>)[key]
-    if (nested !== null && nested !== undefined) {
-      return nested as T
-    }
-  }
-
-  return parsed as T
 }
 
 async function extractStructuredBySections(cleanedText: string): Promise<ResumeStructured> {
