@@ -2,7 +2,7 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-RUN corepack enable
+RUN corepack enable && corepack prepare pnpm@10.11.0 --activate
 
 ARG PNPM_REGISTRY=https://registry.npmmirror.com
 RUN pnpm config set registry ${PNPM_REGISTRY} \
