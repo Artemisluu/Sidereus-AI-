@@ -32,24 +32,31 @@ export function ScoreCharts({ score }: Props) {
 
   return (
     <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
-      <div className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
-        <h3 className="mb-2 font-medium">雷达图</h3>
+      <div className="panel-shell panel-shell--dense">
+        <h3 className="mb-2 font-medium text-[color:var(--text-strong)]">雷达图</h3>
         <ResponsiveContainer width="100%" height={240}>
           <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
-            <PolarGrid />
-            <PolarAngleAxis dataKey="subject" />
-            <Radar dataKey="value" stroke="#4f8cff" fill="#4f8cff" fillOpacity={0.5} />
+            <PolarGrid stroke="#47656d" />
+            <PolarAngleAxis dataKey="subject" tick={{ fill: "#8ea4a2", fontSize: 12 }} />
+            <Radar dataKey="value" stroke="#8bd3dd" fill="#8bd3dd" fillOpacity={0.45} />
           </RadarChart>
         </ResponsiveContainer>
       </div>
-      <div className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
-        <h3 className="mb-2 font-medium">维度柱状图</h3>
+      <div className="panel-shell panel-shell--dense">
+        <h3 className="mb-2 font-medium text-[color:var(--text-strong)]">维度柱状图</h3>
         <ResponsiveContainer width="100%" height={240}>
           <BarChart data={barData}>
-            <XAxis dataKey="name" />
-            <YAxis domain={[0, 100]} />
-            <Tooltip />
-            <Bar dataKey="value" fill="#4f8cff" radius={[6, 6, 0, 0]} />
+            <XAxis dataKey="name" tick={{ fill: "#8ea4a2", fontSize: 12 }} axisLine={false} tickLine={false} />
+            <YAxis domain={[0, 100]} tick={{ fill: "#8ea4a2", fontSize: 12 }} axisLine={false} tickLine={false} />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: "rgba(8, 19, 23, 0.92)",
+                border: "1px solid rgba(150, 195, 197, 0.14)",
+                borderRadius: "16px",
+                color: "#ecf4f3",
+              }}
+            />
+            <Bar dataKey="value" fill="#8bd3dd" radius={[6, 6, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>

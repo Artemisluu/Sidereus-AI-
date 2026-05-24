@@ -67,18 +67,14 @@ export function UploadPanel({ onUploaded }: Props) {
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-      <h2 className="text-lg font-semibold">简历上传与解析</h2>
-      <p className="text-sm text-slate-500 dark:text-slate-400">
+    <div className="panel-shell">
+      <h2 className="panel-title text-lg">简历上传与解析</h2>
+      <p className="ops-copy text-sm">
         支持拖拽 / 点击上传，仅 PDF，建议单次上传 5-10 份。
       </p>
 
       <label
-        className={`mt-3 grid min-h-[120px] cursor-pointer place-items-center rounded-xl border-2 border-dashed p-3 text-sm ${
-          dragging
-            ? "border-blue-500 bg-blue-100/40 dark:bg-blue-950/20"
-            : "border-slate-300 dark:border-slate-600"
-        }`}
+        className={`dropzone-shell ${dragging ? "dropzone-shell--active" : ""}`}
         onDragEnter={() => setDragging(true)}
         onDragLeave={() => setDragging(false)}
         onDragOver={(event) => {
@@ -107,20 +103,20 @@ export function UploadPanel({ onUploaded }: Props) {
         <button
           type="button"
           disabled={files.length < 5 || uploadMutation.isPending}
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm enabled:hover:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600"
+          className="control-button control-button--primary disabled:cursor-not-allowed disabled:opacity-50"
           onClick={() => uploadMutation.mutate()}
         >
           {uploadMutation.isPending ? "上传中..." : `确认上传 (${files.length})`}
         </button>
         {files.length < 5 && (
-          <small className="text-xs text-amber-500">至少选择 5 份简历后可上传</small>
+          <small className="text-xs text-[color:var(--accent-gold)]">至少选择 5 份简历后可上传</small>
         )}
       </div>
 
       <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
         {files.map((item, index) => (
           <div
-            className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700"
+            className="overflow-hidden rounded-[22px] border border-[color:var(--panel-border)] bg-[color:var(--panel-soft)]"
             key={`${item.file.name}-${index}`}
           >
             {item.thumbnail ? (
@@ -130,7 +126,7 @@ export function UploadPanel({ onUploaded }: Props) {
                 alt={item.file.name}
               />
             ) : (
-              <div className="grid h-[120px] place-items-center bg-blue-100 text-sm dark:bg-blue-950/30">
+              <div className="grid h-[120px] place-items-center bg-[rgba(139,211,221,0.1)] text-sm text-[color:var(--text-strong)]">
                 PDF
               </div>
             )}

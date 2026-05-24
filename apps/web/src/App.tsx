@@ -58,6 +58,34 @@ export default function App() {
     [candidatesQuery.data, compareIds]
   )
 
+  const selectedCandidate = candidateQuery.data ?? null
+  const selectedCandidateName =
+    selectedCandidate?.structuredData?.basicInfo?.name ||
+    selectedCandidate?.filename ||
+    "未选择"
+  const summaryItems = [
+    {
+      label: "候选人总数",
+      value: String((candidatesQuery.data ?? []).length),
+      note: (candidatesQuery.data ?? []).length ? "候选人库已同步" : "等待上传简历",
+    },
+    {
+      label: "当前对比",
+      value: String(compareItems.length),
+      note: compareItems.length ? "最多同时 3 人" : "在列表中勾选候选人",
+    },
+    {
+      label: "已选 JD",
+      value: selectedJobId ? "已就绪" : "未选择",
+      note: selectedJobId ? "可直接发起匹配评分" : "先在左侧保存或选择 JD",
+    },
+    {
+      label: "当前候选人",
+      value: selectedCandidateName,
+      note: selectedCandidate ? `状态：${selectedCandidate.status}` : "点击列表查看详情",
+    },
+  ]
+
   function handleUploadCompleted() {
     setGlobalError("")
     setUploadOpen(false)
@@ -79,78 +107,110 @@ export default function App() {
   }
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-[1480px] space-y-4 px-5 py-5">
-      <header className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-        <div>
-          <h1 className="text-xl font-semibold">Sidereus AI 招聘助手</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            React + Express + TypeScript + PostgreSQL + DeepSeek + SSE
-          </p>
+    <main className="ops-shell">
+      <header className="ops-hero">
+        <div className="relative flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+          <div className="max-w-3xl">
+            <span className="ops-eyebrow">Sidereus / Ops Console</span>
+            <h1 className="ops-display mt-3 text-3xl sm:text-4xl">Sidereus AI 招聘助手</h1>
+            <p className="ops-copy mt-3 max-w-2xl text-sm sm:text-base">
+              从简历入库、岗位配置到候选人提取评分，把高频操作折叠进一张真正可用的招聘运营战情台。
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2 text-xs text-[color:var(--text-muted)]">
+              <span className="ops-tag">React + Express</span>
+              <span className="ops-tag">TypeScript + PostgreSQL</span>
+              <span className="ops-tag">DeepSeek + SSE Streaming</span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="control-button self-start"
+            onClick={toggleTheme}
+          >
+            主题切换（Ctrl+K）
+          </button>
         </div>
-        <button
-          type="button"
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm hover:border-blue-500 dark:border-slate-600"
-          onClick={toggleTheme}
-        >
-          主题切换（Ctrl+K）
-        </button>
+
+        <div className="ops-kpi-grid mt-6">
+          {summaryItems.map((item) => (
+            <article key={item.label} className="ops-kpi-card">
+              <span className="ops-kpi-label">{item.label}</span>
+              <strong className="ops-kpi-value">{item.value}</strong>
+              <p className="ops-kpi-note">{item.note}</p>
+            </article>
+          ))}
+        </div>
       </header>
 
       {globalError && (
-        <div className="rounded-lg border border-rose-400 bg-rose-100 px-3 py-2 text-sm text-rose-600 dark:bg-rose-950/50 dark:text-rose-300">
+        <div className="ops-alert mt-5">
           {globalError}
         </div>
       )}
 
-      <section className="space-y-3">
-        <article className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-          <button
-            type="button"
-            className="flex w-full items-center justify-between text-left"
-            onClick={() => setUploadOpen((prev: boolean) => !prev)}
-          >
-            <h2 className="text-lg font-semibold">简历上传与解析</h2>
-            <span className="text-sm text-slate-500 dark:text-slate-400">
-              {uploadOpen ? "收起" : "展开"}
-            </span>
-          </button>
-          {uploadOpen && (
-            <div className="mt-3">
+      <div className="mt-6 grid gap-5 xl:grid-cols-[320px_minmax(0,1fr)] 2xl:grid-cols-[320px_minmax(0,1fr)_420px]">
+        <section className="space-y-5">
+          <div className="flex items-center justify-between gap-3 px-1">
+            <span className="ops-section-label">操作轨道</span>
+            <span className="ops-section-note">高频输入与配置入口</span>
+          </div>
+
+          <article className="space-y-3">
+            <div className="flex items-start justify-between gap-3 px-1">
+              <div>
+                <p className="ops-panel-tag">简历入库</p>
+                <p className="ops-copy text-sm">上传完成后会自动把视线拉回候选人工作台。</p>
+              </div>
+              <button
+                type="button"
+                className="control-button control-button--ghost"
+                onClick={() => setUploadOpen((prev: boolean) => !prev)}
+              >
+                {uploadOpen ? "收起" : "展开"}
+              </button>
+            </div>
+            {uploadOpen ? (
               <UploadPanel onUploaded={handleUploadCompleted} />
-            </div>
-          )}
-        </article>
+            ) : (
+              <div className="panel-shell panel-shell--collapsed">上传工具已折叠</div>
+            )}
+          </article>
 
-        <article className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-          <button
-            type="button"
-            className="flex w-full items-center justify-between text-left"
-            onClick={() => setJdOpen((prev: boolean) => !prev)}
-          >
-            <h2 className="text-lg font-semibold">岗位需求配置</h2>
-            <span className="text-sm text-slate-500 dark:text-slate-400">
-              {jdOpen ? "收起" : "展开"}
-            </span>
-          </button>
-          {jdOpen && (
-            <div className="mt-3">
+          <article className="space-y-3">
+            <div className="flex items-start justify-between gap-3 px-1">
+              <div>
+                <p className="ops-panel-tag">岗位配置</p>
+                <p className="ops-copy text-sm">先保存 JD，再在右侧候选人详情中发起匹配评分。</p>
+              </div>
+              <button
+                type="button"
+                className="control-button control-button--ghost"
+                onClick={() => setJdOpen((prev: boolean) => !prev)}
+              >
+                {jdOpen ? "收起" : "展开"}
+              </button>
+            </div>
+            {jdOpen ? (
               <JdPanel onSelectJob={setSelectedJobId} />
-            </div>
-          )}
-        </article>
-      </section>
+            ) : (
+              <div className="panel-shell panel-shell--collapsed">JD 配置区已折叠</div>
+            )}
+          </article>
+        </section>
 
-      <section
-        ref={candidatePanelRef}
-        className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900"
-      >
-        <h2 className="mb-3 text-lg font-semibold">候选人管理面板</h2>
-        {candidatesQuery.isLoading ? (
-          <section className="animate-pulse rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-            候选人加载中...
-          </section>
-        ) : (
-          <section className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+        <section ref={candidatePanelRef} className="space-y-5">
+          <div className="flex items-end justify-between gap-3 px-1">
+            <div>
+              <span className="ops-section-label">候选人工作台</span>
+              <p className="ops-copy mt-2 text-sm">集中完成搜索、筛选、排序、视图切换和对比勾选。</p>
+            </div>
+            <span className="ops-section-note">30 秒自动同步一次列表</span>
+          </div>
+
+          {candidatesQuery.isLoading ? (
+            <section className="panel-shell animate-pulse">候选人加载中...</section>
+          ) : (
             <CandidateList
               candidates={candidatesQuery.data ?? []}
               selectedId={selectedCandidateId}
@@ -168,39 +228,64 @@ export default function App() {
                 })
               }}
             />
+          )}
+        </section>
+
+        <aside className="space-y-5 xl:col-span-2 2xl:col-span-1">
+          <div className="flex items-end justify-between gap-3 px-1">
+            <div>
+              <span className="ops-section-label">详情工作台</span>
+              <p className="ops-copy mt-2 text-sm">查看结构化结果、提取进度、评分细节和原始 PDF。</p>
+            </div>
+            <span className="ops-section-note">
+              {selectedCandidateId ? "已锁定当前候选人" : "请选择候选人"}
+            </span>
+          </div>
+
+          <div className="2xl:sticky 2xl:top-5">
             <CandidateDetail
               candidate={candidateQuery.data ?? null}
               selectedJobId={selectedJobId}
               onSelectJob={setSelectedJobId}
             />
-          </section>
-        )}
-      </section>
+          </div>
+        </aside>
+      </div>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-        <h2 className="mb-3 text-lg font-semibold">候选人对比（2-3 人）</h2>
-        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+      <section className="panel-shell panel-shell--hero mt-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <span className="ops-section-label">候选人对比（2-3 人）</span>
+            <p className="ops-copy mt-2 text-sm">横向查看候选人姓名、教育背景、技能与流程状态。</p>
+          </div>
+          <span className="ops-section-note">
+            {compareItems.length ? `已加入 ${compareItems.length} 人` : "最多同时对比 3 人"}
+          </span>
+        </div>
+
+        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {compareItems.map((candidate) => (
             <article
               key={candidate.id}
-              className="rounded-lg border border-slate-200 p-3 dark:border-slate-700"
+              className="compare-card"
             >
+              <span className="ops-panel-tag">对比对象</span>
               <h3 className="font-semibold">
                 {candidate.structuredData?.basicInfo?.name || candidate.filename}
               </h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-[color:var(--text-muted)]">
                 {candidate.structuredData?.education?.[0]?.school ?? "-"}
               </p>
-              <p className="text-sm">
+              <p className="mt-2 text-sm text-[color:var(--text-strong)]">
                 {(candidate.structuredData?.skillTags ?? []).join(" / ") || "暂无技能"}
               </p>
-              <span className="mt-2 inline-block rounded-full border border-slate-300 px-2 py-0.5 text-xs dark:border-slate-600">
+              <span className="ops-status-pill mt-3 inline-flex">
                 {candidate.status}
               </span>
             </article>
           ))}
           {!compareItems.length && (
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="compare-empty-state">
               在候选人列表中勾选 2-3 人即可对比。
             </p>
           )}

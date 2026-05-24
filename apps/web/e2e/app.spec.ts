@@ -66,6 +66,16 @@ test("renders core modules and candidate list", async ({ page }) => {
   await expect(page.getByText("张三-前端工程师.pdf")).toBeVisible()
 })
 
+test("renders ops console shell sections", async ({ page }) => {
+  await page.goto("/")
+
+  await expect(page.getByText("候选人总数")).toBeVisible()
+  await expect(page.getByText("操作轨道")).toBeVisible()
+  await expect(page.getByText("候选人工作台")).toBeVisible()
+  await expect(page.getByText("详情工作台")).toBeVisible()
+  await expect(page.getByRole("heading", { name: "候选人对比（2-3 人）" })).toBeVisible()
+})
+
 test("opens candidate detail after selecting candidate", async ({ page }) => {
   await page.goto("/")
 

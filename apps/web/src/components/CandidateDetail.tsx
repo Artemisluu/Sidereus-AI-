@@ -359,7 +359,7 @@ export function CandidateDetail({ candidate, selectedJobId, onSelectJob }: Props
 
   if (!candidate) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-4 text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
+      <div className="panel-shell text-[color:var(--text-muted)]">
         请选择候选人查看详情
       </div>
     )
@@ -430,13 +430,13 @@ export function CandidateDetail({ candidate, selectedJobId, onSelectJob }: Props
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+    <div className="panel-shell">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <h2 className="text-lg font-semibold">候选人详情</h2>
+        <h2 className="panel-title text-lg">候选人详情</h2>
         <div className="flex items-center gap-2">
           <button
             type="button"
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm hover:border-blue-500 dark:border-slate-600"
+            className="control-button control-button--primary"
             onClick={handleSseExtract}
           >
             AI 提取（SSE）
@@ -444,7 +444,7 @@ export function CandidateDetail({ candidate, selectedJobId, onSelectJob }: Props
         </div>
       </div>
 
-      <p className="text-sm text-slate-500 dark:text-slate-400">
+      <p className="text-sm text-[color:var(--text-muted)]">
         {animatedStreamStep || streamStep || "可开始 AI 结构化提取"}
         {(isTypingStreamStep || (streamStep && !animatedStreamStep)) && (
           <span
@@ -454,18 +454,18 @@ export function CandidateDetail({ candidate, selectedJobId, onSelectJob }: Props
         )}
       </p>
 
-      <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-950/40">
+      <div className="data-surface mt-3">
         <div className="mb-2 flex items-center justify-between text-xs sm:text-sm">
-          <span className="font-medium text-slate-700 dark:text-slate-200">
+          <span className="font-medium text-[color:var(--text-strong)]">
             提取进度：{completedStageCount}/{extractStages.length}
           </span>
-          <span className="text-slate-600 dark:text-slate-300">
+          <span className="text-[color:var(--text-muted)]">
             当前：{extractStageLabel(activeExtractStage)}
           </span>
         </div>
-        <div className="h-2.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+        <div className="h-2.5 overflow-hidden rounded-full bg-[rgba(255,255,255,0.08)]">
           <div
-            className="h-full rounded-full bg-blue-500 transition-all duration-500 ease-out"
+            className="h-full rounded-full bg-[color:var(--accent-cyan)] transition-all duration-500 ease-out"
             style={{ width: `${extractProgress}%` }}
           />
         </div>
@@ -491,8 +491,8 @@ export function CandidateDetail({ candidate, selectedJobId, onSelectJob }: Props
                     isDone
                       ? "text-emerald-700 dark:text-emerald-300"
                       : isActive
-                        ? "text-blue-700 dark:text-blue-300"
-                        : "text-slate-700 dark:text-slate-200"
+                        ? "text-sky-300"
+                        : "text-[color:var(--text-strong)]"
                   }`}
                 >
                   {stage.label}
@@ -525,9 +525,9 @@ export function CandidateDetail({ candidate, selectedJobId, onSelectJob }: Props
       </div>
 
       <div className="mt-2 flex items-center gap-2">
-        <label className="text-sm">流程状态：</label>
+        <label className="text-sm text-[color:var(--text-muted)]">流程状态：</label>
         <select
-          className="rounded-lg border border-slate-300 px-3 py-1 text-sm dark:border-slate-600 dark:bg-slate-900"
+          className="control-select min-w-[160px]"
           value={candidate.status}
           onChange={(event) =>
             statusMutation.mutate({
@@ -546,8 +546,8 @@ export function CandidateDetail({ candidate, selectedJobId, onSelectJob }: Props
 
       <div className="mt-3 grid grid-cols-1 gap-3 2xl:grid-cols-2">
         <section>
-          <h3 className="mb-1 font-medium">结构化信息</h3>
-          <pre className="min-h-[180px] overflow-auto rounded-lg border border-slate-200 bg-slate-100 p-2 text-xs dark:border-slate-700 dark:bg-slate-950/40">
+          <h3 className="mb-1 font-medium text-[color:var(--text-strong)]">结构化信息</h3>
+          <pre className="data-surface min-h-[180px] overflow-auto text-xs">
             {displayedStructuredJson}
             {isTypingStructured && (
               <span
@@ -559,16 +559,16 @@ export function CandidateDetail({ candidate, selectedJobId, onSelectJob }: Props
         </section>
 
         <section>
-          <h3 className="mb-1 font-medium">手动修正（JSON）</h3>
+          <h3 className="mb-1 font-medium text-[color:var(--text-strong)]">手动修正（JSON）</h3>
           <textarea
-            className="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs dark:border-slate-600 dark:bg-slate-900"
+            className="control-textarea text-xs"
             value={manualJson}
             onChange={(event) => setManualJson(event.target.value)}
             rows={16}
           />
           <button
             type="button"
-            className="mt-2 rounded-lg border border-slate-300 px-3 py-2 text-sm hover:border-blue-500 dark:border-slate-600"
+            className="control-button mt-2"
             onClick={() => {
               try {
                 const parsed = JSON.parse(manualJson) as ResumeStructured
@@ -664,23 +664,23 @@ export function CandidateDetail({ candidate, selectedJobId, onSelectJob }: Props
               </svg>
               <div className="absolute inset-0 py-7 grid place-items-center text-center">
                 <div className="text-3xl font-bold">{latestScore.total}</div>
-                <small>综合匹配度</small>
+                <small className="text-[color:var(--text-muted)]">综合匹配度</small>
               </div>
             </div>
-            <p className="text-sm text-slate-600 dark:text-slate-300">{latestScore.comment}</p>
+            <p className="text-sm text-[color:var(--text-muted)]">{latestScore.comment}</p>
             <ScoreCharts score={latestScore} />
           </>
         ) : (
-          <p className="text-sm text-slate-500 dark:text-slate-400">暂无评分结果</p>
+          <p className="text-sm text-[color:var(--text-muted)]">暂无评分结果</p>
         )}
       </section>
 
       <section>
-        <h3 className="mb-2 mt-4 font-medium">原始 PDF 预览</h3>
+        <h3 className="mb-2 mt-4 font-medium text-[color:var(--text-strong)]">原始 PDF 预览</h3>
         <iframe
           title="candidate-pdf"
           src={`${import.meta.env.VITE_API_BASE ?? "http://localhost:4000"}${candidate.fileUrl}`}
-          className="min-h-[420px] w-full rounded-lg border border-slate-300 dark:border-slate-600"
+          className="min-h-[420px] w-full rounded-[22px] border border-[color:var(--panel-border)]"
         />
       </section>
     </div>

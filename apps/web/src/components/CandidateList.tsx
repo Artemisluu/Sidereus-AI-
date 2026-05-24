@@ -74,28 +74,20 @@ export function CandidateList({
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize)
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+    <div className="panel-shell">
       <div className="mb-3 flex items-center justify-between gap-2">
-        <h2 className="text-lg font-semibold">候选人管理面板</h2>
+        <h2 className="panel-title text-lg">候选人管理面板</h2>
         <div className="flex items-center gap-2">
           <button
             type="button"
-            className={`rounded-lg border px-3 py-1 text-sm ${
-              viewMode === "table"
-                ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
-                : "border-slate-300 dark:border-slate-600"
-            }`}
+            className={`control-button ${viewMode === "table" ? "control-button--active" : "control-button--ghost"}`}
             onClick={() => setViewMode("table")}
           >
             表格
           </button>
           <button
             type="button"
-            className={`rounded-lg border px-3 py-1 text-sm ${
-              viewMode === "card"
-                ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
-                : "border-slate-300 dark:border-slate-600"
-            }`}
+            className={`control-button ${viewMode === "card" ? "control-button--active" : "control-button--ghost"}`}
             onClick={() => setViewMode("card")}
           >
             卡片
@@ -105,19 +97,19 @@ export function CandidateList({
 
       <div className="mb-3 grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
         <input
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900"
+          className="control-input"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="搜索姓名/技能/学校/关键词"
         />
         <input
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900"
+          className="control-input"
           value={skillFilter}
           onChange={(event) => setSkillFilter(event.target.value)}
           placeholder="技能标签过滤"
         />
         <select
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900"
+          className="control-select w-full"
           value={statusFilter}
           onChange={(event) => setStatusFilter(event.target.value)}
         >
@@ -129,7 +121,7 @@ export function CandidateList({
           <option value="rejected">已淘汰</option>
         </select>
         <select
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900"
+          className="control-select w-full"
           value={sortBy}
           onChange={(event) => setSortBy(event.target.value as "createdAt" | "filename")}
         >
@@ -142,19 +134,19 @@ export function CandidateList({
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr>
-              <th className="border-b border-slate-200 p-2 text-left dark:border-slate-700">
+              <th className="border-b border-[color:var(--panel-border)] p-2 text-left text-[color:var(--text-muted)]">
                 对比
               </th>
-              <th className="border-b border-slate-200 p-2 text-left dark:border-slate-700">
+              <th className="border-b border-[color:var(--panel-border)] p-2 text-left text-[color:var(--text-muted)]">
                 文件名
               </th>
-              <th className="border-b border-slate-200 p-2 text-left dark:border-slate-700">
+              <th className="border-b border-[color:var(--panel-border)] p-2 text-left text-[color:var(--text-muted)]">
                 状态
               </th>
-              <th className="border-b border-slate-200 p-2 text-left dark:border-slate-700">
+              <th className="border-b border-[color:var(--panel-border)] p-2 text-left text-[color:var(--text-muted)]">
                 技能标签
               </th>
-              <th className="border-b border-slate-200 p-2 text-left dark:border-slate-700">
+              <th className="border-b border-[color:var(--panel-border)] p-2 text-left text-[color:var(--text-muted)]">
                 上传时间
               </th>
             </tr>
@@ -163,10 +155,10 @@ export function CandidateList({
             {paged.map((candidate) => (
               <tr
                 key={candidate.id}
-                className={`${candidate.id === selectedId ? "bg-blue-50 dark:bg-blue-950/20" : ""} cursor-pointer`}
+                className={`${candidate.id === selectedId ? "bg-[rgba(139,211,221,0.10)]" : ""} cursor-pointer transition`}
                 onClick={() => onSelect(candidate.id)}
               >
-                <td className="border-b border-slate-200 p-2 dark:border-slate-700">
+                <td className="border-b border-[color:var(--panel-border)] p-2">
                   <input
                     type="checkbox"
                     checked={compareIds.includes(candidate.id)}
@@ -174,20 +166,20 @@ export function CandidateList({
                     onClick={(event) => event.stopPropagation()}
                   />
                 </td>
-                <td className="border-b border-slate-200 p-2 dark:border-slate-700">
+                <td className="border-b border-[color:var(--panel-border)] p-2">
                   {candidate.filename}
                 </td>
-                <td className="border-b border-slate-200 p-2 dark:border-slate-700">
+                <td className="border-b border-[color:var(--panel-border)] p-2">
                   <span
-                    className={`inline-block rounded-full border border-slate-300 px-2 py-0.5 text-xs dark:border-slate-600 ${statusClassMap[candidate.status]}`}
+                    className={`inline-block rounded-full border border-[color:var(--panel-border)] px-2 py-0.5 text-xs ${statusClassMap[candidate.status]}`}
                   >
                     {statusText[candidate.status]}
                   </span>
                 </td>
-                <td className="border-b border-slate-200 p-2 dark:border-slate-700">
+                <td className="border-b border-[color:var(--panel-border)] p-2 text-[color:var(--text-muted)]">
                   {(candidate.structuredData?.skillTags ?? []).slice(0, 3).join(" / ") || "-"}
                 </td>
-                <td className="border-b border-slate-200 p-2 dark:border-slate-700">
+                <td className="border-b border-[color:var(--panel-border)] p-2 text-[color:var(--text-muted)]">
                   {new Date(candidate.createdAt).toLocaleString()}
                 </td>
               </tr>
@@ -199,10 +191,10 @@ export function CandidateList({
           {paged.map((candidate) => (
             <div
               key={candidate.id}
-              className={`rounded-lg border p-3 ${
+              className={`rounded-[22px] border p-3 ${
                 candidate.id === selectedId
-                  ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20"
-                  : "border-slate-200 dark:border-slate-700"
+                  ? "border-[color:var(--accent-cyan)] bg-[rgba(139,211,221,0.10)]"
+                  : "border-[color:var(--panel-border)] bg-[rgba(255,255,255,0.04)]"
               }`}
             >
               <div className="mb-2 flex items-center justify-between">
@@ -214,16 +206,16 @@ export function CandidateList({
                 />
               </div>
               <span
-                className={`inline-block rounded-full border border-slate-300 px-2 py-0.5 text-xs dark:border-slate-600 ${statusClassMap[candidate.status]}`}
+                className={`inline-block rounded-full border border-[color:var(--panel-border)] px-2 py-0.5 text-xs ${statusClassMap[candidate.status]}`}
               >
                 {statusText[candidate.status]}
               </span>
-              <p className="my-2 text-sm">
+              <p className="my-2 text-sm text-[color:var(--text-muted)]">
                 {(candidate.structuredData?.skillTags ?? []).join(" / ") || "暂无技能标签"}
               </p>
               <button
                 type="button"
-                className="rounded-lg border border-slate-300 px-3 py-1 text-sm hover:border-blue-500 dark:border-slate-600"
+                className="control-button control-button--ghost"
                 onClick={() => onSelect(candidate.id)}
               >
                 查看详情
@@ -234,13 +226,13 @@ export function CandidateList({
       )}
 
       <div className="mt-3 flex items-center justify-between gap-2">
-        <small className="text-slate-500 dark:text-slate-400">
+        <small className="text-[color:var(--text-muted)]">
           共 {filtered.length} 人，当前第 {page}/{totalPages} 页
         </small>
         <div className="flex items-center gap-2">
           <button
             type="button"
-            className="rounded-lg border border-slate-300 px-3 py-1 text-sm enabled:hover:border-blue-500 disabled:opacity-50 dark:border-slate-600"
+            className="control-button control-button--ghost disabled:opacity-50"
             disabled={page <= 1}
             onClick={() => setPage((value) => value - 1)}
           >
@@ -248,7 +240,7 @@ export function CandidateList({
           </button>
           <button
             type="button"
-            className="rounded-lg border border-slate-300 px-3 py-1 text-sm enabled:hover:border-blue-500 disabled:opacity-50 dark:border-slate-600"
+            className="control-button control-button--ghost disabled:opacity-50"
             disabled={page >= totalPages}
             onClick={() => setPage((value) => value + 1)}
           >

@@ -33,30 +33,30 @@ export function JdPanel({ onSelectJob }: Props) {
   })
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-      <h2 className="text-lg font-semibold">岗位需求配置（JD 编辑器）</h2>
+    <div className="panel-shell">
+      <h2 className="panel-title text-lg">岗位需求配置（JD 编辑器）</h2>
       <div className="mt-3 grid gap-2">
         <input
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900"
+          className="control-input"
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           placeholder="岗位名称"
         />
         <textarea
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900"
+          className="control-textarea"
           value={description}
           onChange={(event) => setDescription(event.target.value)}
           placeholder="岗位描述"
           rows={4}
         />
         <input
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900"
+          className="control-input"
           value={requiredSkills}
           onChange={(event) => setRequiredSkills(event.target.value)}
           placeholder="必备技能（逗号分隔）"
         />
         <input
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900"
+          className="control-input"
           value={bonusSkills}
           onChange={(event) => setBonusSkills(event.target.value)}
           placeholder="加分技能（逗号分隔）"
@@ -64,7 +64,7 @@ export function JdPanel({ onSelectJob }: Props) {
       </div>
       <button
         type="button"
-        className="mt-2 rounded-lg border border-slate-300 px-3 py-2 text-sm enabled:hover:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600"
+        className="control-button control-button--primary mt-3 disabled:cursor-not-allowed disabled:opacity-50"
         disabled={!title || !description || createMutation.isPending}
         onClick={() =>
           createMutation.mutate({
