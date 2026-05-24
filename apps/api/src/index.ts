@@ -178,7 +178,7 @@ async function callDeepSeek(prompt: string): Promise<string> {
       Authorization: `Bearer ${deepseekApiKey}`,
     },
     body: JSON.stringify({
-      model: "deepseek-chat",
+      model: "deepseek-v4-flash",
       messages: [
         {
           role: "system",
@@ -218,6 +218,17 @@ function safeJsonParse<T>(text: string, fallback: T): T {
   }
 }
 
+function normalizeChunk<T>(parsed: unknown, key: string, fallback: T): T {
+  if (typeof parsed === "object" && parsed !== null && Object.prototype.hasOwnProperty.call(parsed, key)) {
+    const nested = (parsed as Record<string, unknown>)[key]
+    if (nested !== null && nested !== undefined) {
+      return nested as T
+    }
+  }
+
+  return parsed as T
+}
+
 async function extractStructuredBySections(cleanedText: string): Promise<ResumeStructured> {
   const basicInfoRaw = await callDeepSeek(`
 从下面简历文本提取 basicInfo 字段并仅返回 JSON：
@@ -251,16 +262,25 @@ async function extractStructuredBySections(cleanedText: string): Promise<ResumeS
 `)
 
   return {
-    basicInfo: safeJsonParse(basicInfoRaw, {
-      name: "",
-      phone: "",
-      email: "",
-      city: "",
-    }),
-    education: safeJsonParse(educationRaw, []),
-    workExperience: safeJsonParse(workRaw, []),
-    skillTags: safeJsonParse(skillRaw, []),
-    projects: safeJsonParse(projectRaw, []),
+    basicInfo: normalizeChunk(
+      safeJsonParse(basicInfoRaw, {
+        name: "",
+        phone: "",
+        email: "",
+        city: "",
+      }),
+      "basicInfo",
+      {
+        name: "",
+        phone: "",
+        email: "",
+        city: "",
+      },
+    ),
+    education: normalizeChunk(safeJsonParse(educationRaw, []), "education", []),
+    workExperience: normalizeChunk(safeJsonParse(workRaw, []), "workExperience", []),
+    skillTags: normalizeChunk(safeJsonParse(skillRaw, []), "skillTags", []),
+    projects: normalizeChunk(safeJsonParse(projectRaw, []), "projects", []),
   }
 }
 
@@ -431,37 +451,41 @@ app.get("/api/candidates/:id/extract/stream", async (req, res) => {
   try {
     sendEvent("progress", { step: "basicInfo", status: "running" })
     const basicInfoRaw = await callDeepSeek(
-      `仅返回 JSON，提取 basicInfo: {\"name\":\"\",\"phone\":\"\",\"email\":\"\",\"city\":\"\"}。简历文本：${cleanedText}`
+      `仅返回 JSON，提取 basicInfo 对象本身，不要包一层 basicInfo 属性：{\"name\":\"\",\"phone\":\"\",\"email\":\"\",\"city\":\"\"}。简历文本：${cleanedText}`
     )
-    const basicInfo = safeJsonParse(basicInfoRaw, { name: "", phone: "", email: "", city: "" })
+    const basicInfo = normalizeChunk(
+      safeJsonParse(basicInfoRaw, { name: "", phone: "", email: "", city: "" }),
+      "basicInfo",
+      { name: "", phone: "", email: "", city: "" },
+    )
     sendEvent("chunk", { key: "basicInfo", value: basicInfo })
 
     sendEvent("progress", { step: "education", status: "running" })
     const educationRaw = await callDeepSeek(
-      `仅返回 JSON 数组，提取 education: [{\"school\":\"\",\"major\":\"\",\"degree\":\"\",\"graduationDate\":\"\"}]。简历文本：${cleanedText}`
+      `仅返回 JSON 数组，提取 education 数组本身，不要包一层 education 属性：[{\"school\":\"\",\"major\":\"\",\"degree\":\"\",\"graduationDate\":\"\"}]。简历文本：${cleanedText}`
     )
-    const education = safeJsonParse(educationRaw, [])
+    const education = normalizeChunk(safeJsonParse(educationRaw, []), "education", [])
     sendEvent("chunk", { key: "education", value: education })
 
     sendEvent("progress", { step: "workExperience", status: "running" })
     const workRaw = await callDeepSeek(
-      `仅返回 JSON 数组，提取 workExperience: [{\"company\":\"\",\"title\":\"\",\"period\":\"\",\"summary\":\"\"}]。简历文本：${cleanedText}`
+      `仅返回 JSON 数组，提取 workExperience 数组本身，不要包一层 workExperience 属性：[{\"company\":\"\",\"title\":\"\",\"period\":\"\",\"summary\":\"\"}]。简历文本：${cleanedText}`
     )
-    const workExperience = safeJsonParse(workRaw, [])
+    const workExperience = normalizeChunk(safeJsonParse(workRaw, []), "workExperience", [])
     sendEvent("chunk", { key: "workExperience", value: workExperience })
 
     sendEvent("progress", { step: "skillTags", status: "running" })
     const skillsRaw = await callDeepSeek(
-      `仅返回 JSON 数组，提取 skillTags: [\"React\",\"Node.js\"]。简历文本：${cleanedText}`
+      `仅返回 JSON 数组，提取 skillTags 数组本身，不要包一层 skillTags 属性：[\"React\",\"Node.js\"]。简历文本：${cleanedText}`
     )
-    const skillTags = safeJsonParse(skillsRaw, [])
+    const skillTags = normalizeChunk(safeJsonParse(skillsRaw, []), "skillTags", [])
     sendEvent("chunk", { key: "skillTags", value: skillTags })
 
     sendEvent("progress", { step: "projects", status: "running" })
     const projectsRaw = await callDeepSeek(
-      `仅返回 JSON 数组，提取 projects: [{\"projectName\":\"\",\"techStack\":[],\"responsibility\":\"\",\"highlights\":\"\"}]。简历文本：${cleanedText}`
+      `仅返回 JSON 数组，提取 projects 数组本身，不要包一层 projects 属性：[{\"projectName\":\"\",\"techStack\":[],\"responsibility\":\"\",\"highlights\":\"\"}]。简历文本：${cleanedText}`
     )
-    const projects = safeJsonParse(projectsRaw, [])
+    const projects = normalizeChunk(safeJsonParse(projectsRaw, []), "projects", [])
     sendEvent("chunk", { key: "projects", value: projects })
 
     const structured: ResumeStructured = {

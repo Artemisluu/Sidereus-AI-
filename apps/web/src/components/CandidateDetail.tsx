@@ -2,6 +2,7 @@ import type { Candidate, CandidateScore, CandidateStatus, ResumeStructured } fro
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+import ReactJson from 'react-json-view';
 import {
   fetchJobs,
   fetchCandidateScores,
@@ -62,11 +63,28 @@ function emptyStructured(): ResumeStructured {
   };
 }
 
+function stripPdfExtension(filename: string): string {
+  return filename.replace(/\.pdf$/i, '');
+}
+
+function resolveCandidateLabel(candidate: Candidate, data?: ResumeStructured): string {
+  const extractedName = data?.basicInfo.name.trim();
+  if (extractedName) {
+    return extractedName;
+  }
+
+  const savedName = candidate.structuredData?.basicInfo.name.trim();
+  if (savedName) {
+    return savedName;
+  }
+
+  return stripPdfExtension(candidate.filename);
+}
+
 export function CandidateDetail({ candidate, selectedJobId, onSelectJob }: Props) {
   const queryClient = useQueryClient();
   const [structured, setStructured] = useState<ResumeStructured>(emptyStructured());
-  const [displayedStructuredJson, setDisplayedStructuredJson] = useState(JSON.stringify(emptyStructured(), null, 2));
-  const [isTypingStructured, setIsTypingStructured] = useState(false);
+  const [extractCompletionNotice, setExtractCompletionNotice] = useState('');
   const [streamStep, setStreamStep] = useState('');
   const [animatedStreamStep, setAnimatedStreamStep] = useState('');
   const [isTypingStreamStep, setIsTypingStreamStep] = useState(false);
@@ -78,9 +96,6 @@ export function CandidateDetail({ candidate, selectedJobId, onSelectJob }: Props
   const streamStepIntervalRef = useRef<number | null>(null);
   const streamStepPauseRef = useRef<number | null>(null);
   const animatedStreamStepRef = useRef('');
-  const structuredIntervalRef = useRef<number | null>(null);
-  const structuredPauseRef = useRef<number | null>(null);
-  const displayedStructuredRef = useRef(JSON.stringify(emptyStructured(), null, 2));
   const completedStageEffectRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -88,99 +103,15 @@ export function CandidateDetail({ candidate, selectedJobId, onSelectJob }: Props
       return;
     }
     const nextStructured = candidate.structuredData ?? emptyStructured();
-    const nextStructuredJson = JSON.stringify(nextStructured, null, 2);
-
-    if (structuredIntervalRef.current !== null) {
-      window.clearInterval(structuredIntervalRef.current);
-      structuredIntervalRef.current = null;
-    }
-    if (structuredPauseRef.current !== null) {
-      window.clearTimeout(structuredPauseRef.current);
-      structuredPauseRef.current = null;
-    }
 
     setStructured(nextStructured);
-    displayedStructuredRef.current = nextStructuredJson;
-    setDisplayedStructuredJson(nextStructuredJson);
-    setIsTypingStructured(false);
+    setExtractCompletionNotice('');
     setStreamStep('');
     setActiveExtractStage(null);
     setCompletedExtractStages([]);
     setJustCompletedStage(null);
     setManualJson(JSON.stringify(nextStructured, null, 2));
   }, [candidate]);
-
-  const structuredJson = useMemo(() => JSON.stringify(structured, null, 2), [structured]);
-
-  useEffect(() => {
-    if (structuredIntervalRef.current !== null) {
-      window.clearInterval(structuredIntervalRef.current);
-      structuredIntervalRef.current = null;
-    }
-    if (structuredPauseRef.current !== null) {
-      window.clearTimeout(structuredPauseRef.current);
-      structuredPauseRef.current = null;
-    }
-
-    if (!structuredJson) {
-      displayedStructuredRef.current = '';
-      setDisplayedStructuredJson('');
-      setIsTypingStructured(false);
-      return;
-    }
-
-    const currentText = displayedStructuredRef.current;
-    const maxPrefixLength = Math.min(currentText.length, structuredJson.length);
-    let prefixLength = 0;
-    while (prefixLength < maxPrefixLength && currentText[prefixLength] === structuredJson[prefixLength]) {
-      prefixLength += 1;
-    }
-
-    const stablePrefix = structuredJson.slice(0, prefixLength);
-    displayedStructuredRef.current = stablePrefix;
-    setDisplayedStructuredJson(stablePrefix);
-
-    const remainingText = structuredJson.slice(prefixLength);
-    setIsTypingStructured(true);
-
-    if (!remainingText) {
-      structuredPauseRef.current = window.setTimeout(() => {
-        setIsTypingStructured(false);
-        structuredPauseRef.current = null;
-      }, 180);
-      return;
-    }
-
-    let nextIndex = 0;
-    const charsPerTick = 16;
-
-    structuredIntervalRef.current = window.setInterval(() => {
-      nextIndex = Math.min(nextIndex + charsPerTick, remainingText.length);
-      const nextText = stablePrefix + remainingText.slice(0, nextIndex);
-      displayedStructuredRef.current = nextText;
-      setDisplayedStructuredJson(nextText);
-
-      if (nextIndex >= remainingText.length && structuredIntervalRef.current !== null) {
-        window.clearInterval(structuredIntervalRef.current);
-        structuredIntervalRef.current = null;
-        structuredPauseRef.current = window.setTimeout(() => {
-          setIsTypingStructured(false);
-          structuredPauseRef.current = null;
-        }, 180);
-      }
-    }, 10);
-
-    return () => {
-      if (structuredIntervalRef.current !== null) {
-        window.clearInterval(structuredIntervalRef.current);
-        structuredIntervalRef.current = null;
-      }
-      if (structuredPauseRef.current !== null) {
-        window.clearTimeout(structuredPauseRef.current);
-        structuredPauseRef.current = null;
-      }
-    };
-  }, [structuredJson]);
 
   useEffect(() => {
     if (streamStepIntervalRef.current !== null) {
@@ -262,14 +193,6 @@ export function CandidateDetail({ candidate, selectedJobId, onSelectJob }: Props
       if (streamStepPauseRef.current !== null) {
         window.clearTimeout(streamStepPauseRef.current);
         streamStepPauseRef.current = null;
-      }
-      if (structuredIntervalRef.current !== null) {
-        window.clearInterval(structuredIntervalRef.current);
-        structuredIntervalRef.current = null;
-      }
-      if (structuredPauseRef.current !== null) {
-        window.clearTimeout(structuredPauseRef.current);
-        structuredPauseRef.current = null;
       }
       if (completedStageEffectRef.current !== null) {
         window.clearTimeout(completedStageEffectRef.current);
@@ -353,6 +276,7 @@ export function CandidateDetail({ candidate, selectedJobId, onSelectJob }: Props
       window.clearTimeout(completedStageEffectRef.current);
       completedStageEffectRef.current = null;
     }
+    setExtractCompletionNotice('');
     setCompletedExtractStages([]);
     setJustCompletedStage(null);
     setActiveExtractStage(null);
@@ -387,12 +311,16 @@ export function CandidateDetail({ candidate, selectedJobId, onSelectJob }: Props
         setStreamStep(`处理中：${extractStageLabel(stageKey)}`);
       },
       (data) => {
+        const completionNotice = `当前候选人${resolveCandidateLabel(candidate, data)}简历结构化提取完毕，请查看。`;
+
         setStructured(data);
         setManualJson(JSON.stringify(data, null, 2));
+        setExtractCompletionNotice(completionNotice);
         setStreamStep('提取完成');
         setCompletedExtractStages(extractStages.map((item) => item.key));
         setActiveExtractStage(null);
         setJustCompletedStage(null);
+        toast.success(completionNotice);
         source.close();
         streamSourceRef.current = null;
         queryClient.invalidateQueries({ queryKey: ['candidate', candidate.id] });
@@ -400,6 +328,7 @@ export function CandidateDetail({ candidate, selectedJobId, onSelectJob }: Props
       },
       (message) => {
         setStreamStep(`提取失败：${message}`);
+        setExtractCompletionNotice('');
         setActiveExtractStage(null);
         source.close();
         streamSourceRef.current = null;
@@ -428,6 +357,12 @@ export function CandidateDetail({ candidate, selectedJobId, onSelectJob }: Props
           <span className='ml-0.5 inline-block h-4 w-[1px] animate-pulse bg-current align-middle' aria-hidden='true' />
         )}
       </p>
+
+      {extractCompletionNotice && (
+        <p className='mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'>
+          {extractCompletionNotice}
+        </p>
+      )}
 
       <div className='data-surface mt-3'>
         <div className='mb-2 flex items-center justify-between text-xs sm:text-sm'>
@@ -515,15 +450,18 @@ export function CandidateDetail({ candidate, selectedJobId, onSelectJob }: Props
       <div className='mt-3 grid grid-cols-1 gap-3 2xl:grid-cols-2'>
         <section>
           <h3 className='mb-1 font-medium text-[color:var(--text-strong)]'>结构化信息</h3>
-          <pre className='data-surface min-h-[180px] overflow-auto text-xs'>
-            {displayedStructuredJson}
-            {isTypingStructured && (
-              <span
-                className='ml-0.5 inline-block h-3 w-[1px] animate-pulse bg-current align-middle'
-                aria-hidden='true'
-              />
-            )}
-          </pre>
+          <div className='data-surface min-h-[180px] overflow-auto text-xs' data-testid='structured-json-view'>
+            <ReactJson
+              src={structured}
+              name={false}
+              collapsed={false}
+              displayDataTypes={false}
+              displayObjectSize={false}
+              enableClipboard={false}
+              iconStyle='triangle'
+              style={{ backgroundColor: 'transparent' }}
+            />
+          </div>
         </section>
 
         <section>
