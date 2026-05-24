@@ -1,5 +1,5 @@
 import type { Candidate, CandidateStatus } from "@sidereus/shared"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useAppStore } from "../store"
 
 interface Props {
@@ -72,6 +72,14 @@ export function CandidateList({
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize)
+
+  useEffect(() => {
+    setPage(1)
+  }, [search, statusFilter, skillFilter, sortBy])
+
+  useEffect(() => {
+    setPage((currentPage) => Math.min(currentPage, totalPages))
+  }, [totalPages])
 
   return (
     <div className="panel-shell">

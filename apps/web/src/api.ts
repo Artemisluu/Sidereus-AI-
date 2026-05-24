@@ -117,10 +117,18 @@ export function streamExtractCandidate(
 
   source.addEventListener("error", (event) => {
     const data = (event as MessageEvent).data
-    if (data) {
-      const parsed = JSON.parse(data) as { message?: string }
-      onError(parsed.message ?? "SSE failed")
+    let message = "SSE failed"
+
+    if (typeof data === "string" && data.trim()) {
+      try {
+        const parsed = JSON.parse(data) as { message?: string }
+        message = parsed.message ?? message
+      } catch {
+        message = data
+      }
     }
+
+    onError(message)
     source.close()
   })
 
