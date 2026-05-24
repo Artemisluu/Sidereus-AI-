@@ -1,0 +1,55 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        VITE_API_BASE: /
+    container_name: sidereus-web
+    depends_on:
+      api:
+        condition: service_started
+    ports:
+      - "80:80"
+    restart: unless-stoppedz
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: sidereus-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/sidereus
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
+      PORT: 4000
+      WEB_ORIGIN: ${WEB_ORIGIN:-*}
+    ports:
+      - "4000:4000"
+    volumes:
+      - sidereus_uploads:/app/apps/api/uploads
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16
+    container_name: sidereus-postgres
+    environment:
+      POSTGRES_DB: sidereus
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - sidereus_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d sidereus"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  sidereus_pg_data:
+  sidereus_uploads:
