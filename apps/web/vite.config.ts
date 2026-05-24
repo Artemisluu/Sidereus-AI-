@@ -3,6 +3,15 @@ import { defineConfig } from "vite"
 
 export default defineConfig({
   plugins: [react()],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          return id.includes("node_modules") ? "vendor" : undefined
+        },
+      },
+    },
+  },
   server: {
     port: 5173,
     proxy: {
