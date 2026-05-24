@@ -112,7 +112,9 @@ export function UploadPanel({ onUploaded }: Props) {
         >
           {uploadMutation.isPending ? "上传中..." : `确认上传 (${files.length})`}
         </button>
-        {files.length < 5 && <small className="text-xs text-amber-500">至少选择 5 份简历后可上传</small>}
+        {files.length < 5 && (
+          <small className="text-xs text-amber-500">至少选择 5 份简历后可上传</small>
+        )}
       </div>
 
       <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
@@ -122,9 +124,15 @@ export function UploadPanel({ onUploaded }: Props) {
             key={`${item.file.name}-${index}`}
           >
             {item.thumbnail ? (
-              <img className="h-[120px] w-full object-cover" src={item.thumbnail} alt={item.file.name} />
+              <img
+                className="h-[120px] w-full object-cover"
+                src={item.thumbnail}
+                alt={item.file.name}
+              />
             ) : (
-              <div className="grid h-[120px] place-items-center bg-blue-100 text-sm dark:bg-blue-950/30">PDF</div>
+              <div className="grid h-[120px] place-items-center bg-blue-100 text-sm dark:bg-blue-950/30">
+                PDF
+              </div>
             )}
             <div className="grid gap-1 p-2 text-xs">
               <strong>{item.file.name}</strong>

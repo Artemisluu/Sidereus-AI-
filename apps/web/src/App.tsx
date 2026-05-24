@@ -110,7 +110,9 @@ export default function App() {
             onClick={() => setUploadOpen((prev: boolean) => !prev)}
           >
             <h2 className="text-lg font-semibold">简历上传与解析</h2>
-            <span className="text-sm text-slate-500 dark:text-slate-400">{uploadOpen ? "收起" : "展开"}</span>
+            <span className="text-sm text-slate-500 dark:text-slate-400">
+              {uploadOpen ? "收起" : "展开"}
+            </span>
           </button>
           {uploadOpen && (
             <div className="mt-3">
@@ -126,7 +128,9 @@ export default function App() {
             onClick={() => setJdOpen((prev: boolean) => !prev)}
           >
             <h2 className="text-lg font-semibold">岗位需求配置</h2>
-            <span className="text-sm text-slate-500 dark:text-slate-400">{jdOpen ? "收起" : "展开"}</span>
+            <span className="text-sm text-slate-500 dark:text-slate-400">
+              {jdOpen ? "收起" : "展开"}
+            </span>
           </button>
           {jdOpen && (
             <div className="mt-3">
@@ -181,16 +185,24 @@ export default function App() {
               key={candidate.id}
               className="rounded-lg border border-slate-200 p-3 dark:border-slate-700"
             >
-              <h3 className="font-semibold">{candidate.structuredData?.basicInfo?.name || candidate.filename}</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400">{candidate.structuredData?.education?.[0]?.school ?? "-"}</p>
-              <p className="text-sm">{(candidate.structuredData?.skillTags ?? []).join(" / ") || "暂无技能"}</p>
+              <h3 className="font-semibold">
+                {candidate.structuredData?.basicInfo?.name || candidate.filename}
+              </h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                {candidate.structuredData?.education?.[0]?.school ?? "-"}
+              </p>
+              <p className="text-sm">
+                {(candidate.structuredData?.skillTags ?? []).join(" / ") || "暂无技能"}
+              </p>
               <span className="mt-2 inline-block rounded-full border border-slate-300 px-2 py-0.5 text-xs dark:border-slate-600">
                 {candidate.status}
               </span>
             </article>
           ))}
           {!compareItems.length && (
-            <p className="text-sm text-slate-500 dark:text-slate-400">在候选人列表中勾选 2-3 人即可对比。</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              在候选人列表中勾选 2-3 人即可对比。
+            </p>
           )}
         </div>
       </section>

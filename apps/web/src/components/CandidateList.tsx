@@ -142,11 +142,21 @@ export function CandidateList({
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr>
-              <th className="border-b border-slate-200 p-2 text-left dark:border-slate-700">对比</th>
-              <th className="border-b border-slate-200 p-2 text-left dark:border-slate-700">文件名</th>
-              <th className="border-b border-slate-200 p-2 text-left dark:border-slate-700">状态</th>
-              <th className="border-b border-slate-200 p-2 text-left dark:border-slate-700">技能标签</th>
-              <th className="border-b border-slate-200 p-2 text-left dark:border-slate-700">上传时间</th>
+              <th className="border-b border-slate-200 p-2 text-left dark:border-slate-700">
+                对比
+              </th>
+              <th className="border-b border-slate-200 p-2 text-left dark:border-slate-700">
+                文件名
+              </th>
+              <th className="border-b border-slate-200 p-2 text-left dark:border-slate-700">
+                状态
+              </th>
+              <th className="border-b border-slate-200 p-2 text-left dark:border-slate-700">
+                技能标签
+              </th>
+              <th className="border-b border-slate-200 p-2 text-left dark:border-slate-700">
+                上传时间
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -164,7 +174,9 @@ export function CandidateList({
                     onClick={(event) => event.stopPropagation()}
                   />
                 </td>
-                <td className="border-b border-slate-200 p-2 dark:border-slate-700">{candidate.filename}</td>
+                <td className="border-b border-slate-200 p-2 dark:border-slate-700">
+                  {candidate.filename}
+                </td>
                 <td className="border-b border-slate-200 p-2 dark:border-slate-700">
                   <span
                     className={`inline-block rounded-full border border-slate-300 px-2 py-0.5 text-xs dark:border-slate-600 ${statusClassMap[candidate.status]}`}
@@ -175,7 +187,9 @@ export function CandidateList({
                 <td className="border-b border-slate-200 p-2 dark:border-slate-700">
                   {(candidate.structuredData?.skillTags ?? []).slice(0, 3).join(" / ") || "-"}
                 </td>
-                <td className="border-b border-slate-200 p-2 dark:border-slate-700">{new Date(candidate.createdAt).toLocaleString()}</td>
+                <td className="border-b border-slate-200 p-2 dark:border-slate-700">
+                  {new Date(candidate.createdAt).toLocaleString()}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -204,7 +218,9 @@ export function CandidateList({
               >
                 {statusText[candidate.status]}
               </span>
-              <p className="my-2 text-sm">{(candidate.structuredData?.skillTags ?? []).join(" / ") || "暂无技能标签"}</p>
+              <p className="my-2 text-sm">
+                {(candidate.structuredData?.skillTags ?? []).join(" / ") || "暂无技能标签"}
+              </p>
               <button
                 type="button"
                 className="rounded-lg border border-slate-300 px-3 py-1 text-sm hover:border-blue-500 dark:border-slate-600"

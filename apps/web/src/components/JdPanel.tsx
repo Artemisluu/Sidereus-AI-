@@ -83,7 +83,6 @@ export function JdPanel({ onSelectJob }: Props) {
       >
         保存 JD
       </button>
-
     </div>
   )
 }
