@@ -1,13 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import { createJob, fetchJobs } from "../api"
 
 interface Props {
   onSelectJob: (jobId: string) => void
-  selectedJobId: string
 }
 
-export function JdPanel({ onSelectJob, selectedJobId }: Props) {
+export function JdPanel({ onSelectJob }: Props) {
   const queryClient = useQueryClient()
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
@@ -30,11 +29,6 @@ export function JdPanel({ onSelectJob, selectedJobId }: Props) {
       onSelectJob(job.id)
     },
   })
-
-  const selectedTitle = useMemo(
-    () => jobsQuery.data?.find((job) => job.id === selectedJobId)?.title ?? "未选择",
-    [jobsQuery.data, selectedJobId]
-  )
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
@@ -88,24 +82,6 @@ export function JdPanel({ onSelectJob, selectedJobId }: Props) {
         保存 JD
       </button>
 
-      <div className="mt-3 grid gap-2">
-        <h3 className="font-medium">已保存 JD（当前：{selectedTitle}）</h3>
-        {jobsQuery.isLoading && <p className="animate-pulse text-sm text-slate-500">加载中...</p>}
-        {jobsQuery.data?.map((job) => (
-          <button
-            type="button"
-            key={job.id}
-            className={`rounded-lg border px-3 py-2 text-left text-sm ${
-              selectedJobId === job.id
-                ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
-                : "border-slate-300 dark:border-slate-600"
-            }`}
-            onClick={() => onSelectJob(job.id)}
-          >
-            {job.title}
-          </button>
-        ))}
-      </div>
     </div>
   )
 }

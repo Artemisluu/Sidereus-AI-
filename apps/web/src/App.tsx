@@ -130,7 +130,7 @@ export default function App() {
           </button>
           {jdOpen && (
             <div className="mt-3">
-              <JdPanel onSelectJob={setSelectedJobId} selectedJobId={selectedJobId} />
+              <JdPanel onSelectJob={setSelectedJobId} />
             </div>
           )}
         </article>
@@ -164,7 +164,11 @@ export default function App() {
                 })
               }}
             />
-            <CandidateDetail candidate={candidateQuery.data ?? null} selectedJobId={selectedJobId} />
+            <CandidateDetail
+              candidate={candidateQuery.data ?? null}
+              selectedJobId={selectedJobId}
+              onSelectJob={setSelectedJobId}
+            />
           </section>
         )}
       </section>
