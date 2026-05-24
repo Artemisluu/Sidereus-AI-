@@ -1,60 +1,81 @@
 # Sidereus - AI 智能招聘系统
 
-Sidereus 是一个基于 `pnpm monorepo` 的全栈招聘系统，覆盖简历上传解析、AI 结构化提取、岗位匹配评分、候选人管理等核心招聘流程。
+Sidereus 是一个基于 pnpm monorepo 的全栈招聘系统，围绕“简历上传 -> AI 提取 -> JD 配置 -> 智能评分 -> 候选人管理”构建一条完整招聘工作流。项目当前包含前端控制台、后端 API、PostgreSQL 数据存储，以及前后端共享类型包。
 
 ## 项目架构说明
 
 ### 整体架构
 
-- 架构模式：前后端分离 + RESTful API + SSE 实时流。
-- 前端（`apps/web`）：负责上传交互、候选人列表/详情、评分展示与状态管理。
-- 后端（`apps/api`）：负责文件上传、PDF 文本提取、AI 调用、结构化入库与评分逻辑。
-- 数据层（PostgreSQL）：存储候选人、JD、评分历史及结构化 JSON。
-- 共享层（`packages/shared`）：沉淀前后端共享类型，降低接口漂移风险。
+```mermaid
+flowchart LR
+  U[浏览器] --> W[apps/web\nReact + Vite]
+  W -->|REST| A[apps/api\nExpress + TypeScript]
+  W -->|SSE| A
+  A --> D[(PostgreSQL)]
+  A --> F[uploads/\nPDF 文件]
+  A --> M[DeepSeek API]
+  S[packages/shared\n共享类型] --> W
+  S --> A
+```
+
+- 前端 `apps/web` 负责招聘运营工作台，包括上传入口、候选人列表、详情面板、JD 管理和评分可视化。
+- 后端 `apps/api` 负责文件上传、PDF 解析、AI 结构化提取、评分计算、状态流转和数据持久化。
+- `packages/shared` 维护前后端共享的数据结构，减少接口字段漂移和联调成本。
+- PostgreSQL 同时保存业务表和结构化简历 JSON，适合当前快速迭代阶段。
+- 前后端通过 REST 处理常规 CRUD，通过 SSE 推送简历提取进度和分段结果。
 
 ### 目录结构
 
 ```txt
 apps/
-  api/      # Express 后端服务
-  web/      # React 前端应用
+  api/        Express API、文件上传、PDF 解析、AI 提取、评分逻辑
+  web/        React 前端控制台
 packages/
-  shared/   # 前后端共享类型
-test-data/  # 测试 PDF 与生成脚本
+  shared/     前后端共享类型定义
+docs/
+  superpowers/plans  过程文档与计划
+  superpowers/specs  需求与设计说明
+test-data/
+  resumes/    测试简历样本
 ```
+
+### 关键运行链路
+
+1. 用户在前端上传 PDF 简历，文件经 `multer` 落盘到后端 `uploads` 目录。
+2. 后端使用 `pdf-parse` 读取文本，并做基础清洗与文件名归一化。
+3. 简历原文、清洗后文本和元数据写入 PostgreSQL；结构化字段初始为空。
+4. 用户在候选人详情页触发 AI 提取时，后端按模块调用 DeepSeek，并通过 SSE 流式回传进度与分段结果。
+5. 用户可在前端修正结构化 JSON，并保存回数据库。
+6. 用户配置 JD 后，对候选人发起评分；评分结果写回数据库并在前端图表中展示。
 
 ## 技术选型及理由
 
-- 前端：`React + TypeScript + Vite`
-  - React 组件化适合复杂业务界面拆分；
-  - TypeScript 提升模型结构、接口字段的可维护性；
-  - Vite 冷启动快，适合高频迭代。
-
-- 后端：`Express + TypeScript`
-  - Express 轻量直接，适配本项目 REST + SSE 场景；
-  - TypeScript 与前端共享类型，减少联调成本。
-
-- 数据库：`PostgreSQL`
-  - 对结构化字段与 `JSONB` 支持成熟；
-  - 便于后续做筛选、排序和统计扩展。
-
-- AI 能力：`DeepSeek API`
-  - 统一模型接口，便于实现分段提取与评分；
-  - 能与 SSE 结合，提供可感知的流式体验。
-
-- 通信方式：`RESTful + SSE`
-  - REST 适合 CRUD；
-  - SSE 天然适配单向进度流（提取过程、状态反馈）。
+| 技术 | 用途 | 选择理由 |
+| --- | --- | --- |
+| `pnpm workspace` | Monorepo 管理 | 统一依赖与脚本，便于维护多包项目和共享代码。 |
+| `React 19 + TypeScript + Vite` | 前端应用 | 组件化适合复杂工作台；TypeScript 提升模型约束；Vite 冷启动快，适合高频迭代。 |
+| `@tanstack/react-query` | 前端服务端状态 | 统一处理列表、详情、轮询刷新和异步缓存，减少手写请求状态逻辑。 |
+| `zustand` | 前端轻量全局状态 | 适合主题、全局错误等跨组件状态，避免引入更重的状态管理方案。 |
+| `Tailwind CSS + Recharts` | 界面与数据可视化 | Tailwind 适合快速搭建运营台界面；Recharts 足够支撑评分图表展示。 |
+| `Express + TypeScript` | 后端 API | 学习成本低、控制力强，适合本项目 REST + SSE 混合场景。 |
+| `multer + pdf-parse` | 文件上传与 PDF 解析 | 组合简单直接，能快速完成简历入库链路。 |
+| `PostgreSQL` | 数据存储 | 结构化查询稳定，且 `JSONB` 适合保存结构化简历结果。 |
+| `Zod` | 请求校验 | 在后端入口做参数约束，降低脏数据写入风险。 |
+| `DeepSeek API` | AI 信息提取与评分 | 统一模型入口，适合实现结构化提取、评分和流式反馈。 |
+| `REST + SSE` | 前后端通信 | REST 负责查询与写入；SSE 适合单向、可观察的提取过程推送。 |
+| `Biome + Vitest + Playwright` | 工程质量 | 覆盖格式化、静态检查、单元测试与端到端测试。 |
+| `Docker Compose` | 本地联调与部署 | 一套编排同时管理 Web、API、PostgreSQL，降低环境差异。 |
 
 ## 本地开发环境搭建指南
 
-### 1) 环境要求
+### 1. 环境要求
 
 - Node.js `>= 20`
-- pnpm `>= 9`
-- PostgreSQL `>= 15`（本地安装或 Docker）
+- pnpm `>= 10`
+- Docker / Docker Compose
+- 可用的 DeepSeek API Key
 
-### 2) 获取代码与安装依赖
+### 2. 获取代码并安装依赖
 
 ```bash
 git clone <your-repo-url>
@@ -62,65 +83,99 @@ cd Sidereus
 pnpm install
 ```
 
-### 3) 配置环境变量
+### 3. 配置环境变量
+
+项目已提供环境变量样例：
 
 ```bash
 cp .env.example .env
 ```
 
-至少配置：
+默认示例如下：
 
-- `DATABASE_URL=postgresql://...`
-- `DEEPSEEK_API_KEY=你的真实密钥`
-- 可选：`WEB_ORIGIN`、`DEEPSEEK_BASE_URL`
+```env
+DATABASE_URL=postgres://postgres:postgres@localhost:5432/sidereus
+DEEPSEEK_API_KEY=your_deepseek_api_key
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+PORT=4000
+WEB_ORIGIN=http://localhost:5173
+VITE_API_BASE=http://localhost:4000
+```
 
-### 4) 启动 PostgreSQL（若使用 Docker）
+说明：
+
+- `DATABASE_URL` 是后端连接 PostgreSQL 的地址。
+- `DEEPSEEK_API_KEY` 是 AI 提取与评分必填项。
+- `WEB_ORIGIN` 用于后端 CORS。
+- `VITE_API_BASE` 主要用于本地 Vite 开发环境；生产容器默认走同源反向代理。
+
+### 4. 启动数据库
+
+如果本机没有 PostgreSQL，推荐直接使用 Compose 启动数据库服务：
 
 ```bash
 docker compose up -d postgres
 ```
 
-### 5) 启动开发服务
+后端启动时会自动执行建表逻辑，因此当前版本不需要单独跑 migration。
+
+### 5. 启动开发服务
 
 ```bash
 pnpm dev
 ```
 
-- 前端默认：`http://localhost:5173`
-- 后端默认：`http://localhost:4000`
+默认访问地址：
 
-### 6) 常用开发命令
+- 前端: `http://localhost:5173`
+- 后端: `http://localhost:4000`
+- 健康检查: `http://localhost:4000/api/health`
+
+### 6. 常用开发命令
 
 ```bash
-# 构建
 pnpm build
-
-# 指定包构建
-pnpm --filter @sidereus/web build
-pnpm --filter @sidereus/api build
+pnpm typecheck
+pnpm biome:check
+pnpm biome:format
+pnpm --filter @sidereus/web test
+pnpm --filter @sidereus/web test:e2e
 ```
 
 ## 部署方式说明
 
-推荐使用 Docker Compose 一键部署。
+### 推荐方式：Docker Compose 单机部署
 
-### 1) 准备部署环境
+项目默认的部署方式是三服务 Compose：
 
-- 服务器安装 Docker / Docker Compose；
-- 项目根目录准备 `.env`；
-- 至少包含 `DEEPSEEK_API_KEY` 与正确的 `DATABASE_URL`。
+- `web`: Nginx 提供前端静态资源，对 `/api` 和 `/uploads` 做反向代理。
+- `api`: Node.js 运行 Express 服务，处理上传、解析、AI 提取和评分。
+- `postgres`: PostgreSQL 持久化业务数据。
 
-### 2) 一键构建并启动
+### 1. 准备部署环境
+
+- 服务器安装 Docker 和 Docker Compose。
+- 在项目根目录准备 `.env` 文件。
+- 至少配置 `DEEPSEEK_API_KEY`；如果数据库不和 Compose 一起部署，还需要改写 `DATABASE_URL`。
+
+### 2. 构建并启动
 
 ```bash
 docker compose up -d --build
 ```
 
-### 3) 访问
+### 3. 访问方式
 
-- 前端：`http://118.178.99.145`
+- 前端默认对外暴露 `80` 端口。
+- API 默认对外暴露 `4000` 端口。
+- 如果直接使用仓库内 `nginx.conf`，浏览器访问前端域名时，会由 Nginx 代理同源 `/api` 和 `/uploads` 请求到 API 容器。
 
-### 4) 运维命令
+### 4. 数据持久化
+
+- PostgreSQL 数据存放在 Compose volume `sidereus_pg_data`。
+- 上传的 PDF 文件存放在 Compose volume `sidereus_uploads`。
+
+### 5. 常用运维命令
 
 ```bash
 docker compose ps
@@ -131,49 +186,30 @@ docker compose down
 docker compose down -v
 ```
 
+### 6. 部署注意事项
+
+- 当前前端在生产环境默认优先使用同源地址，因此推荐保留 Nginx 反向代理，而不是让浏览器直接跨域访问 API。
+- 如果你要拆分部署前后端，需要在前端构建时明确注入 `VITE_API_BASE`，或自行准备网关层做统一域名转发。
+- 当前数据库表由 API 启动时自动创建，适合小团队和演示环境；若后续演进到多环境协作，建议补充正式 migration 流程。
+
 ## 开发过程中的关键技术决策与思考
 
-- **采用 Monorepo + shared types**：在需求频繁调整时，前后端字段可同步演进，减少“接口对不上”问题。
-- **提取流程改为 SSE 分段返回**：比一次性返回更可观测，用户可实时看到提取阶段与进度。
-- **PDF 解析增加回退策略**：针对部分 PDF 的 `bad XRef entry` 问题，采用多版本解析回退提高代码健壮性。
-- **上传文件名做编码归一化**：修复中文文件名乱码，保证候选人列表展示可读。
-- **关键动作增加显式反馈**：如评分 loading、保存成功 toast、提取进度与完成态，降低用户不确定感。
+- **Monorepo + shared types**：招聘流程字段迭代频繁，把类型收敛到 `packages/shared` 能显著降低前后端接口偏差。
+- **SSE 替代轮询展示提取进度**：结构化提取是一个阶段性过程，用 SSE 可以让用户实时看到当前步骤和结果块，反馈明显优于“点击后等待”。
+- **结构化结果直接落 PostgreSQL JSONB**：前期业务模型还在调整，先保证灵活存储和可回放，避免过早把简历结构拆成大量表。
+- **API 启动时自动建表**：降低本地开发和首次部署门槛，代价是数据库演进治理能力较弱，因此更适合当前阶段而非长期复杂生产环境。
+- **生产环境走同源反代**：相比让前端直连独立 API 域名，同源代理能减少 CORS、上传地址和 SSE 连接配置的复杂度。
+- **PDF 解析加入清洗与文件名归一化**：简历来源复杂，先在入库阶段兜底编码和文本质量，能明显降低后续 AI 提取失败率。
 
-## 模块完成情况
+## 关键接口概览
 
-### 模块一：简历上传与解析 ✅
-
-- 拖拽上传 + 点击上传，仅支持 PDF。
-- 支持批量上传（前端限制至少 5 份）。
-- 后端 `pdf-parse` 解析多页 PDF 文本。
-
-### 模块二：AI 智能信息提取 ✅
-
-- DeepSeek 提取：基本信息、教育、工作、技能、项目。
-- SSE 流式返回分段提取结果，前端渐进渲染。
-- 支持前端 JSON 手动修正并保存。
-
-### 模块三：岗位匹配与智能评分 ✅
-
-- JD 编辑器：岗位描述、必备技能、加分技能。
-- AI 评分返回：综合分 + 子评分 + 评语。
-- 可视化：雷达图 + 柱状图 + 环形分数展示。
-
-### 模块四：候选人管理面板 ✅
-
-- 支持表格/卡片视图切换、筛选、搜索、排序、分页。
-- 详情页展示结构化信息、评分、原始 PDF。
-- 状态流转：待筛选 → 初筛通过 → 面试中 → 已录用/已淘汰。
-
-## 关键接口
-
-- `POST /api/candidates/upload` 批量上传 PDF
-- `GET /api/candidates` 候选人列表
-- `GET /api/candidates/:id` 候选人详情
-- `PATCH /api/candidates/:id/status` 更新状态
-- `GET /api/candidates/:id/extract/stream` SSE 提取
-- `PUT /api/candidates/:id/structured` 保存手动修正
-- `POST /api/jobs` 创建 JD
-- `GET /api/jobs` 列出 JD
-- `POST /api/candidates/:id/score` 对指定 JD 评分
-- `GET /api/candidates/:id/scores` 候选人评分历史
+- `POST /api/candidates/upload`: 批量上传 PDF 简历
+- `GET /api/candidates`: 查询候选人列表
+- `GET /api/candidates/:id`: 查询候选人详情
+- `PATCH /api/candidates/:id/status`: 更新候选人状态
+- `GET /api/candidates/:id/extract/stream`: 以 SSE 方式执行结构化提取
+- `PUT /api/candidates/:id/structured`: 保存人工修正后的结构化结果
+- `POST /api/jobs`: 创建 JD
+- `GET /api/jobs`: 查询 JD 列表
+- `POST /api/candidates/:id/score`: 对指定 JD 发起评分
+- `GET /api/candidates/:id/scores`: 查询候选人评分历史
