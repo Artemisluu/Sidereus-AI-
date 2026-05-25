@@ -7,7 +7,7 @@ import {
   normalizeUploadedFilename,
   rowToCandidate,
   safeJsonParse,
-} from './utils';
+} from './utils.js';
 
 describe('normalizeUploadedFilename', () => {
   it('decodes mojibake CJK filenames back to UTF-8', () => {

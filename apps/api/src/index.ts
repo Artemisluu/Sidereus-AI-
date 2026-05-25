@@ -21,7 +21,7 @@ import {
   normalizeUploadedFilename,
   rowToCandidate,
   safeJsonParse,
-} from "./utils"
+} from "./utils.js"
 
 const app = express()
 const port = Number(process.env.PORT ?? 4000)
